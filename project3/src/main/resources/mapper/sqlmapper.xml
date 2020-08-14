@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+       PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+       "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+       
+<mapper namespace="com.spring.project3.persistence.Cu_DAO">
+
+    <insert id="insertMember" parameterType="com.spring.project3.vo.Cu_VO">
+		insert into cu_member_tbl(id,pwd, name, hp, email, address, authority)
+			values(#{id},#{pwd},#{name},#{hp},#{email},#{address},#{authority})
+	</insert>
+	
+	<select id="selectUser" resultType="java.util.Map" parameterType="String">
+		SELECT id as username, pwd as password, name,enabled,authority
+		  FROM cu_member_tbl
+		 WHERE id=#{userid}
+	</select>
+	
+	<select id="idCheck" resultType="int" parameterType="String">
+		SELECT COUNT(*) FROM cu_member_tbl WHERE id=#{id}
+	</select>
+	
+	<select id="getArticleCnt" resultType="int">
+		SELECT COUNT(*) as cnt FROM cu_board_tbl
+	</select>
+	
+	<select id="getArticleList" resultType="java.util.ArrayList" parameterType="java.util.Map">
+	<![CDATA[
+		SELECT * 
+		  FROM (SELECT num, writer, boardpwd, subject, content, readCnt,ref, ref_step,ref_level,board_reg_date,rowNum rNum 
+		          FROM ( SELECT * 
+		                   FROM cu_board_tbl 
+		                  ORDER BY ref DESC, ref_step ASC
+		                )
+		      ) 
+		 WHERE rNum >= #{start} AND rNum <= #{end}
+		 ]]>
+	</select>
+	
+	
+	<!-- 게시글 조회수증가 -->
+	<update id="addReadCnt" parameterType="int">
+		UPDATE cu_board_tbl SET readCnt = readCnt+1 WHERE num=#{num}
+	</update>
+	
+	<!-- 글쓰기  -->
+	<insert id="insertBoard" parameterType="com.spring.project3.vo.Cu_VO">
+		INSERT INTO cu_board_tbl(num,writer,boardpwd,subject,content,readCnt,ref,ref_step,ref_level,board_reg_date) 
+			VALUES(cu_board_seq.nextVal,#{writer},#{boardpwd},#{subject},#{content},0,#{ref},#{ref_step},#{ref_level},#{board_reg_date})
+	</insert>
+	
+	<!-- 상세페이지 조회 -->
+	<select id="getArticle" parameterType="int" resultType="com.spring.project3.vo.Cu_VO">
+		SELECT * FROM cu_board_tbl WHERE num=#{num}
+	</select>
+	
+	<!-- 회원정보 -->
+	<select id="getMemberInfo" resultType="com.spring.project3.vo.Cu_VO" parameterType="String">
+		SELECT * FROM cu_member_tbl WHERE id=#{id}
+	</select>
+	
+	<!-- 회원정보수정 -->	
+	<update id="updateMember" parameterType="com.spring.project3.vo.Cu_VO">
+		UPDATE cu_member_tbl SET pwd=#{pwd},hp=#{hp},email=#{email},address=#{address} WHERE id=#{id}
+	</update>
+	<!-- 비밀번호 채크 -->
+	<select id="idpwdCheck" resultType="String" parameterType="String">
+		SELECT pwd FROM cu_member_tbl WHERE id=#{id}
+	</select>
+	<!-- 회원 탈퇴처리 -->
+	<delete id="deleteMember" parameterType="String">
+		DELETE cu_member_tbl WHERE id=#{id}
+	</delete>
+	
+	<!-- 장바구니 추가 처리 -->
+	<select id="cartlistAddPro2" resultType="int" parameterType="com.spring.project3.vo.Cu_VO">
+		SELECT COUNT(*) FROM cu_cartlist WHERE CART_NOTB_ID=#{CART_NOTB_ID} AND id=#{CU_ID}
+	</select>
+	
+	<insert id="cartlistAddPro3" parameterType="com.spring.project3.vo.Cu_VO">
+		INSERT INTO cu_cartlist 
+			VALUES(cart_seq.nextval,#{CART_NOTB_ID},#{CU_ID},#{CART_NOTB_NAME},#{CART_NOTB_CNT},#{CART_NOTB_PRICE},#{CART_NOTB_BRAND},#{CART_NOTB_IMG})
+	</insert>
+	
+	<update id="cartlistAddPro"  parameterType="com.spring.project3.vo.Cu_VO">
+		UPDATE cu_cartlist SET CART_NOTB_CNT=CART_NOTB_CNT+#{CART_NOTB_CNT},CART_NOTB_PRICE=CART_NOTB_PRICE+#{CART_NOTB_PRICE} WHERE CART_NOTB_ID=#{CART_NOTB_ID}
+	</update>
+	<!--장바구니 목록 -->
+	<select id="cartlistPro" resultType="com.spring.project3.vo.Cu_VO" parameterType="java.util.Map">
+		<![CDATA[	
+		SELECT * 
+		  FROM (SELECT CART_NOTB_ID, id, CART_NOTB_NAME, CART_NOTB_CNT, CART_NOTB_PRICE, CART_NOTB_BRAND,CART_NOTB_IMG,rowNum rNum  
+		          FROM ( 
+				        SELECT * FROM cu_cartlist  
+				         WHERE id=#{memId}
+				         ORDER BY CART_NOTB_ID
+					   ) 
+			    )
+		 WHERE rNum >= #{start} AND rNum <= #{end}
+				]]>	
+	</select>
+	<!-- 장바구니 갯수 -->
+	<select id="cartlistCnt" resultType="int" parameterType="String">
+		SELECT COUNT(*) as cnt FROM cu_cartlist WHERE id=#{memId}
+	</select>
+	
+	<!-- 즉시구매처리 -->
+	<insert id="buyPro1" parameterType="com.spring.project3.vo.Cu_VO">
+		INSERT INTO order_tbl 
+			VALUES(buy_seq.nextval,#{BUYCU_ID},#{BUY_NOTB_ID},#{BUY_NOTB_NAME},#{BUY_NOTB_CNT},#{BUY_NOTB_PRICE},#{BUY_NOTB_BRAND},#{BUY_NOTB_IMG},1)
+	</insert>		
+	
+	<update id="buyPro2" parameterType="com.spring.project3.vo.Cu_VO">
+		UPDATE ma_Inventory_Management SET NOTB_CNT=NOTB_CNT-#{BUY_NOTB_CNT} WHERE NOTB_ID=#{BUY_NOTB_ID}
+	</update>
+	
+	<update id="buyPro" parameterType="com.spring.project3.vo.Cu_VO">
+		UPDATE settlement_tbl SET settlement_NOTB_PRICE=#{BUY_NOTB_PRICE} , settlement_NOTB_CNT=#{BUY_NOTB_CNT} WHERE settlement_NOTB_NAME=#{BUY_NOTB_NAME} AND settlement_NOTB_BRAND=#{BUY_NOTB_BRAND}
+	</update>
+	
+	
+	<!-- 구매목록 -->
+	<select id="buylistPro" resultType="com.spring.project3.vo.Cu_VO" parameterType="java.util.Map">
+		<![CDATA[	
+		SELECT * 
+		  FROM (SELECT BUY_NOTB_NUM, id, BUY_NOTB_ID, BUY_NOTB_NAME, BUY_NOTB_CNT, BUY_NOTB_PRICE,BUY_NOTB_BRAND,BUY_NOTB_IMG,BUY_NOTB_STATE,rowNum rNum 
+					        FROM ( 
+					            SELECT * FROM order_tbl 
+					            WHERE id=#{memId}
+					           ) 
+					      )
+					WHERE rNum >= #{start} AND rNum <= #{end}
+		]]>	
+	</select>
+	<select id="buylistCnt" resultType="int" parameterType="String">
+		SELECT COUNT(*) as cnt FROM order_tbl WHERE id=#{memId}
+	</select>
+	
+	<!-- 환불 처리 -->
+	<select id="refundPro1" resultType="com.spring.project3.vo.Cu_VO" parameterType="java.util.Map">
+		SELECT * FROM order_tbl WHERE BUY_NOTB_ID=#{notbid} AND id=#{memId} AND BUY_NOTB_NUM=#{notbnum}
+	</select>
+	<insert id="refundPro2" parameterType="com.spring.project3.vo.Cu_VO">
+		INSERT INTO refund_tbl VALUES(refund_seq.nextval,#{BUYCU_ID},#{BUY_NOTB_ID},#{BUY_NOTB_NAME},#{BUY_NOTB_CNT},#{BUY_NOTB_PRICE},#{BUY_NOTB_BRAND},#{BUY_NOTB_IMG},1,sysdate)
+	</insert>
+	
+	<update id="refundPro3" parameterType="com.spring.project3.vo.Cu_VO">
+		UPDATE settlement_tbl SET settlement_NOTB_PRICE=settlement_NOTB_PRICE-#{BUY_NOTB_PRICE} , settlement_NOTB_CNT=settlement_NOTB_CNT-#{BUY_NOTB_CNT} WHERE settlement_NOTB_NAME=#{BUY_NOTB_NAME} AND settlement_NOTB_BRAND=#{BUY_NOTB_BRAND}
+	</update>
+	
+	<delete id="refundPro4" parameterType="com.spring.project3.vo.Cu_VO">
+		DELETE order_tbl WHERE BUY_NOTB_ID=#{BUY_NOTB_ID} AND id=#{BUYCU_ID} AND BUY_NOTB_NUM=#{BUY_NOTB_NUM}
+	</delete>
+	<!-- 환불처리 끝 -->
+	<!-- 환불 목록출력 -->
+	<select id="refundlist" parameterType="java.util.Map" resultType="com.spring.project3.vo.Cu_VO">
+	<![CDATA[
+		SELECT *
+		  FROM (SELECT REFUND_NOTB_NUM, id, REFUND_NOTB_ID, REFUND_NOTB_NAME, REFUND_NOTB_CNT, REFUND_NOTB_PRICE, REFUND_NOTB_BRAND,REFUND_NOTB_IMG,REFUND_NOTB_STATE,rowNum rNum 
+			     FROM ( 
+			           SELECT * FROM refund_tbl 
+			            WHERE id=#{memId}
+			           )
+			    )
+		 WHERE rNum >= #{start} AND rNum <= #{end}
+		]]>
+	</select>
+	
+	<!-- 환불목록 갯수 -->
+	<select id="refundlistCnt" resultType="int" parameterType="String">
+		SELECT COUNT(*) as cnt FROM refund_tbl WHERE id=#{memId}
+	</select>
+	
+	<!-- 아이디 유무 체크 -->
+	<select id="Idmailchk" parameterType="java.util.Map" resultType="int">
+		SELECT COUNT(*) FROM cu_member_tbl WHERE id=#{id} AND email=#{email}
+	</select>
+	
+	<!-- 비밀번호 변경 -->
+	<update id="pwdmodifyPro" parameterType="java.util.Map">
+		UPDATE cu_member_tbl SET pwd=#{pwd} WHERE id=#{id}
+	</update>
+</mapper>
+
+
+
+
+
+
+
+
+

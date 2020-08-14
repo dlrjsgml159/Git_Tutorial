@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+       PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+       "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+       
+<mapper namespace="com.spring.project3.persistence.Ma_DAO">
+	<select id="getArticleList" resultType="com.spring.project3.vo.Ma_VO" parameterType="java.util.Map">
+	<![CDATA[
+	 SELECT *
+	   FROM (SELECT NOTB_ID, NOTB_NAME, NOTB_CNT, NOTB_PRICE, NOTB_BRAND, NOTB_IMG , NOTB_IMG_INFORMATION ,rowNum rNum 
+			   FROM (
+			 SELECT * FROM ma_Inventory_Management 
+	          ORDER BY NOTB_ID
+		           )
+		     ) 
+	  WHERE rNum >= #{start} AND rNum <= #{end}
+	  ]]>
+	</select>
+	<select id="getArticleCnt" resultType="int">
+		SELECT COUNT(*) as cnt FROM ma_Inventory_Management
+	</select>
+	
+	<insert id="inadd" parameterType="com.spring.project3.vo.Ma_VO">
+		INSERT INTO ma_Inventory_Management 
+			VALUES(ma_Inventory_Management_seq.nextval,#{notb_name},#{notb_cnt},#{notb_price},#{notb_brand},#{notb_img},#{notb_img_information})
+	</insert>
+	
+	<insert id="inadd2" parameterType="com.spring.project3.vo.Ma_VO">
+		INSERT INTO settlement_tbl (settlement_NOTB_ID,settlement_NOTB_NAME,settlement_NOTB_BRAND) 
+			VALUES(ma_Inventory_Management_seq.currval,#{notb_name},#{notb_brand})
+	</insert>
+	<select id="getArticle" resultType="com.spring.project3.vo.Ma_VO" parameterType="int">
+		SELECT * FROM ma_Inventory_Management WHERE NOTB_ID=#{num}
+	</select>
+	
+	<!--매니저 구매목록 -->
+	<select id="mabuylistPro" resultType="com.spring.project3.vo.Cu_VO" parameterType="java.util.Map">
+		<![CDATA[	
+		SELECT * 
+		  FROM (SELECT BUY_NOTB_NUM, id, BUY_NOTB_ID, BUY_NOTB_NAME, BUY_NOTB_CNT, BUY_NOTB_PRICE,BUY_NOTB_BRAND,BUY_NOTB_IMG,BUY_NOTB_STATE,rowNum rNum 
+		        FROM (
+		            SELECT * FROM order_tbl 
+		             ) 
+			   ) 
+		 WHERE rNum >= #{start} AND rNum <= #{end}
+		]]>	
+	</select>
+	
+	<!-- 구매목록 갯수 -->
+	<select id="mabuylistCnt" resultType="int">
+		SELECT COUNT(*) as cnt FROM order_tbl
+	</select>
+	
+	<!-- 구매 상태 변경 -->
+	<update id="purchaseapproval" parameterType="java.util.Map">
+		UPDATE order_tbl SET BUY_NOTB_STATE=#{state}+1
+		 WHERE id=#{id} AND BUY_NOTB_ID=#{notbid} AND BUY_NOTB_NUM=#{notbnum}
+	</update>
+	
+	<!-- 환불리스트  -->
+	<select id="marefundlist" resultType="com.spring.project3.vo.Cu_VO" parameterType="java.util.Map">
+		<![CDATA[	
+		SELECT * 
+		  FROM (SELECT REFUND_NOTB_NUM,id, REFUND_NOTB_ID, REFUND_NOTB_NAME, REFUND_NOTB_CNT, REFUND_NOTB_PRICE, REFUND_NOTB_BRAND,REFUND_NOTB_IMG,REFUND_NOTB_STATE,REFUND_NOTB_DATE,rowNum rNum  
+			    FROM ( 
+			          SELECT * FROM refund_tbl 
+			         )
+			    ) 
+		 WHERE rNum >= #{start} AND rNum <= #{end}
+		 ]]>	
+	</select>
+	
+	<!-- 환불 목록 갯수 -->
+	<select id="marefundlistCnt" resultType="int">
+		SELECT COUNT(*) as cnt FROM cu_member_tbl
+	</select>
+	
+	<!-- 환불 상태 변경 -->
+	 <update id="marefundPro" parameterType="java.util.Map">
+		UPDATE refund_tbl SET REFUND_NOTB_STATE=#{state} 
+		 WHERE id=#{id} AND REFUND_NOTB_ID=#{notbid} AND REFUND_NOTB_NUM=#{notbnum}
+	</update>
+	
+	<!-- 회원정보 출력 -->
+	<select id="macustomerPro" resultType="com.spring.project3.vo.Cu_VO" parameterType="java.util.Map">
+	<![CDATA[	
+		SELECT *
+	      FROM (SELECT id, pwd, name, hp, email, address,reg_date,rowNum rNum
+				  FROM ( 
+					    SELECT * FROM cu_member_tbl 
+						) 
+		        ) 
+		 WHERE rNum >= #{start} AND rNum <= #{end}
+		]]>	
+	</select>
+	
+	<!-- 회원인원수  -->
+	<select id="macustomerCnt" resultType="int">
+		SELECT COUNT(*) as cnt FROM cu_member_tbl
+	</select>
+	
+	<!-- 결산  -->
+	<select id="settlementPro" resultType="com.spring.project3.vo.Ma_VO">
+		SELECT * FROM settlement_tbl
+	</select>
+	
+	<!-- 구매상태 별 조회 -->
+	<select id="buystate" resultType="com.spring.project3.vo.Cu_VO" parameterType="int">
+		SELECT * FROM order_tbl WHERE BUY_NOTB_STATE=#{state}
+	</select>
+	<!-- 회원강제탈퇴 -->
+	<delete id="deleteMember" parameterType="String">
+		DELETE cu_member_tbl WHERE id=#{id}
+	</delete>
+	
+</mapper>
