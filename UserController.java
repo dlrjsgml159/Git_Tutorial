@@ -24,4 +24,13 @@ pubilc class UserController{
 
 	return "user/update";
   } 
+
+  //master 브랜치에 주석추가
+  //회원 탈퇴시 세션 삭제
+
+  //회원 삭제 페이지로 이동
+  @RequestMapping(/user/delete.do")
+	logger.info("경로:delete");
+
+	return "user/delete";
 }
