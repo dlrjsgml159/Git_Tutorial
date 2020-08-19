@@ -24,4 +24,5 @@ pubilc class UserController{
 
 	return "user/update";
   } 
+
 }
