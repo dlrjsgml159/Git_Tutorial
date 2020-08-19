@@ -25,8 +25,11 @@ pubilc class UserController{
 	return "user/update";
   } 
 
+<<<<<<< HEAD
   //master 브랜치에 주석추가
   //회원 탈퇴시 세션 삭제
+=======
+>>>>>>> develop
 
   //회원 삭제 페이지로 이동
   @RequestMapping(/user/delete.do")
